@@ -7,7 +7,7 @@ import streamlit as st
 # Add the current directory to sys.path to ensure HandTrackingModule can be imported
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-import HandTrackingModule as htm  # Import the hand tracking module
+import handtrackingmodule as htm  # Import the hand tracking module
 
 # Set up the Streamlit page
 st.title("Sign Language Detection")
