@@ -1,6 +1,7 @@
 streamlit
-opencv-python
+opencv-python-headless==4.8.0.76
 mediapipe
 joblib
 numpy
 Pillow
+
