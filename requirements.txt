@@ -1,5 +1,7 @@
-streamlit==1.14.0
-opencv-python==4.5.5.64
-mediapipe==0.8.10
+opencv-python
+streamlit
+Pillow
+mediapipe
+numpy
 
 
