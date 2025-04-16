@@ -1,35 +1,36 @@
 import cv2
-import time
+import mediapipe as mp
 
-class handDetector:
+class handDetector():
     def __init__(self, detectionCon=0.5):
         self.detectionCon = detectionCon
-        # For hand detection, you can use a pre-trained model, such as MediaPipe Hands.
-        # Or you can use other models such as OpenCV's Haar Cascade Classifier.
-        
-        # Load a pre-trained hand detector model
-        self.hand_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_hand.xml')
 
-    def findHands(self, img):
-        # Convert image to grayscale for better hand detection
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        hands = self.hand_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5)
+        # Initialize MediaPipe Hands module
+        self.mpHands = mp.solutions.hands
+        self.hands = self.mpHands.Hands(min_detection_confidence=self.detectionCon)
+        self.mpDraw = mp.solutions.drawing_utils
 
-        for (x, y, w, h) in hands:
-            cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
+    def findHands(self, img, draw=True):
+        """Detect hands and draw landmarks"""
+        imgRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        self.results = self.hands.process(imgRGB)
 
+        # If hands are detected
+        if self.results.multi_hand_landmarks:
+            for handLandmarks in self.results.multi_hand_landmarks:
+                if draw:
+                    self.mpDraw.draw_landmarks(img, handLandmarks, self.mpHands.HAND_CONNECTIONS)
         return img
 
-    def findPosition(self, img, draw=True):
-        # Sample placeholder for hand position (you should modify this for actual hand position detection)
-        # You can use libraries like MediaPipe to get hand landmarks for better results.
-        
-        posList = []
-        # Example: Let's assume the following positions represent the 5 fingertips
-        posList.append([0, 100, 100])  # Position of thumb
-        posList.append([1, 150, 120])  # Position of index finger
-        posList.append([2, 200, 140])  # Position of middle finger
-        posList.append([3, 250, 160])  # Position of ring finger
-        posList.append([4, 300, 180])  # Position of pinky finger
-        
-        return posList
+    def findPosition(self, img, handNo=0, draw=True):
+        """Return a list of landmark positions for a specific hand"""
+        lmList = []
+        if self.results.multi_hand_landmarks:
+            myHand = self.results.multi_hand_landmarks[handNo]
+            for id, lm in enumerate(myHand.landmark):
+                h, w, c = img.shape
+                cx, cy = int(lm.x * w), int(lm.y * h)
+                lmList.append([id, cx, cy])
+                if draw:
+                    cv2.circle(img, (cx, cy), 5, (0, 255, 0), cv2.FILLED)
+        return lmList
