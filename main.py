@@ -8,6 +8,7 @@ cap = cv2.VideoCapture(0)
 # Initialize HandDetector
 detector = HandDetector()
 
+# Streamlit UI setup
 st.title("Sign Language Detection")
 
 # Streamlit WebCam Stream
@@ -22,10 +23,13 @@ while True:
     # Detect hands
     frame = detector.find_hands(frame)
     
-    # Display the frame in Streamlit
-    st.image(frame, channels="BGR", use_column_width=True)
+    # Convert to RGB (Streamlit expects RGB)
+    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-    # Check if the user wants to stop
+    # Display the frame in Streamlit
+    st.image(frame_rgb, channels="RGB", use_column_width=True)
+
+    # Stop the webcam when Streamlit is done
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
