@@ -1,55 +1,43 @@
 import streamlit as st
 import cv2
 import numpy as np
-import time
-from PIL import Image
-import handtrackingmodule as htm
+from handtrackingmodule import HandDetector
 
-st.set_page_config(page_title="Sign Language Detection", layout="wide")
+st.title("Sign Language Hand Landmark Detector (Webcam)")
 
-st.title("🤟 Real-Time Sign Language Detection")
-st.image("sign-language-alphabet.png", caption="Sign Language Reference", use_container_width=True)
+st.markdown("This app uses your webcam to detect hand landmarks in real-time.")
 
-# Load model
-import joblib
-model = joblib.load("model/sign_model.pkl")
-
-# Initialize hand detector
-detector = htm.handDetector()
-
-# Access webcam
+# Set up webcam
 cap = cv2.VideoCapture(0)
 
-stframe = st.empty()
-predicted_label = st.empty()
+if not cap.isOpened():
+    st.error("Webcam not found!")
+else:
+    # Start the webcam stream
+    stframe = st.empty()  # Placeholder for webcam feed in Streamlit
 
-while True:
-    success, img = cap.read()
-    if not success:
-        st.error("❌ Failed to access webcam")
-        break
+    # Initialize hand detector
+    detector = HandDetector(maxHands=1)
 
-    img = cv2.flip(img, 1)
-    hands = detector.findHands(img)
-    if hands:
-        x, y, w, h = detector.getBoundingBox(hands[0])
-        hand_img = img[y:y+h, x:x+w]
-        try:
-            resized_img = cv2.resize(hand_img, (64, 64))
-            norm_img = resized_img / 255.0
-            input_img = norm_img.reshape(1, 64, 64, 3)
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            st.error("Failed to capture frame from webcam.")
+            break
 
-            prediction = model.predict(input_img)
-            letter = chr(prediction[0] + 65)
+        # Flip the frame horizontally for a later mirror effect
+        frame = cv2.flip(frame, 1)
 
-            predicted_label.markdown(f"### 🧠 Prediction: **{letter}**")
-        except Exception as e:
-            predicted_label.warning("⚠️ Unable to process the hand image.")
-    
-    img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    stframe.image(img_rgb, channels="RGB", use_container_width=True)
+        # Detect hands and draw landmarks
+        hands, frame = detector.findHands(frame, draw=True)
 
-    # Optional: slow down for clarity
-    time.sleep(0.03)
+        # Display the frame with hand landmarks
+        stframe.image(frame, channels="BGR", caption="Detected Hand Landmarks", use_column_width=True)
 
+        # Exit condition for Streamlit app (press 'q' to exit)
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
 
+    # Release the webcam when done
+    cap.release()
+    cv2.destroyAllWindows()
